@@ -59,9 +59,9 @@ The `scope` is optional and will be displayed in bold in the changelog.
 For a repository with commit messages like:
 
 ```
-feat(api): add user authentication endpoint
-fix(ui): correct button alignment
-doc(readme): update installation instructions
+feat: implement changelog processor
+fix: split code into separate files for structs, enums, and impl
+chore: v0.1.1
 ```
 
 Chronicle will generate a changelog like:
@@ -71,19 +71,19 @@ Chronicle will generate a changelog like:
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.0] - 2023-06-15
+## [v0.1.1] - 2025-04-11
 
 ### 🚀 Features
 
-- **api**: add user authentication endpoint
+- implement changelog processor
 
-### 🐛 Bug Fixes
+### 🚜 Refactor
 
-- **ui**: correct button alignment
+- split code into separate files for structs, enums, and impl
 
-### 📚 Documentation
+### 🧹 Chore
 
-- **readme**: update installation instructions
+- v0.1.1
 ```
 
 ## License
