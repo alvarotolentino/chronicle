@@ -9,6 +9,7 @@ Chronicle is a changelog generator that creates formatted changelogs from git co
 - Categorizes commits by type (feat, fix, doc, etc.)
 - Supports both Markdown and HTML output formats
 - Customizable title and output path
+- Custom regex patterns for commit parsing and version detection
 
 ## Installation
 
@@ -31,6 +32,8 @@ chronicle [OPTIONS]
 -o, --output <OUTPUT>            Output file path for the changelog [default: CHANGELOG.md]
 -t, --title <TITLE>              Title for the changelog [default: Changelog]
 -f, --format <FORMAT>            Format for the changelog [default: markdown] [possible values: markdown, html]
+    --commit-pattern <PATTERN>   Custom regex pattern for parsing commit messages
+    --version-pattern <PATTERN>  Custom regex pattern for version tags
 -h, --help                       Print help
 -V, --version                    Print version
 ```
@@ -53,6 +56,20 @@ Chronicle recognizes the following commit message formats:
 | `chore(scope): message` | 🧹 Chore |
 
 The `scope` is optional and will be displayed in bold in the changelog.
+
+### Custom Regex Patterns
+
+You can specify custom regex patterns for commit messages and version tags:
+
+```
+# Using custom commit pattern
+chronicle --commit-pattern "^(\w+):\s(.+)"
+
+# Using custom version pattern
+chronicle --version-pattern "^release-(\d+\.\d+\.\d+)$"
+```
+
+The commit pattern should include named capture groups for `type`, `scope` (optional), and `message`.
 
 ## Example
 

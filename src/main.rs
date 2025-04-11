@@ -16,7 +16,16 @@ enum OutputFormat {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = args::Args::parse();
 
-    let generator = ChangelogGenerator::new(&args.repository)?;
+    let generator = if args.commit_pattern.is_some() || args.version_pattern.is_some() {
+        ChangelogGenerator::with_patterns(
+            &args.repository,
+            args.commit_pattern.as_deref(),
+            args.version_pattern.as_deref(),
+        )?
+    } else {
+        ChangelogGenerator::new(&args.repository)?
+    };
+
     let versions = generator.generate_changelog()?;
 
     match args.format {

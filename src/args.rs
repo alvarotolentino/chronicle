@@ -24,4 +24,12 @@ pub struct Args {
     /// Format for the changelog
     #[arg(short, long, value_enum, default_value_t = OutputFormat::Markdown)]
     pub format: OutputFormat,
+
+    /// Custom regex pattern for commit messages
+    #[arg(long)]
+    pub commit_pattern: Option<String>,
+
+    /// Custom regex pattern for version tags
+    #[arg(long)]
+    pub version_pattern: Option<String>,
 }

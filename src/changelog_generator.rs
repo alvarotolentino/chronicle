@@ -29,6 +29,28 @@ impl ChangelogGenerator {
         })
     }
 
+    pub fn with_patterns(
+        repo_path: &Path,
+        version_pattern: Option<&str>,
+        commit_pattern: Option<&str>,
+    ) -> Result<Self, git2::Error> {
+        let repo = Repository::open(repo_path)?;
+        let version_regex = version_pattern
+            .map(|pattern| Regex::new(pattern).unwrap())
+            .unwrap_or_else(|| Regex::new(r"^v?(\d+\.\d+\.\d+)$").unwrap());
+        let commit_regex = commit_pattern
+            .map(|pattern| Regex::new(pattern).unwrap())
+            .unwrap_or_else(|| {
+                Regex::new(r"^(?P<type>\w+)(?:\((?P<scope>.+)\))?:\s(?P<message>.+)$").unwrap()
+            });
+
+        Ok(Self {
+            repo,
+            version_regex,
+            commit_regex,
+        })
+    }
+
     fn git_time_to_datetime(time: &Time) -> DateTime<Utc> {
         Utc.timestamp_opt(time.seconds(), 0).unwrap()
     }
