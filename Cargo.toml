@@ -7,7 +7,7 @@ license = "GPL-3.0"
 readme = "README.md"
 
 [dependencies]
-git2 = "0.13.24"
+git2 = "0.20.1"
 clap = { version = "4.0", features = ["derive"] }
 regex = "1.5"
 chrono = "0.4"
