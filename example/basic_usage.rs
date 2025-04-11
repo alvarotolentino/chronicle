@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // In a real example, the user would use the CLI directly
     // or import and use the library like this:
     // chronicle::generate_changelog(args)?;
-    
+
     println!("This is a placeholder for the actual example");
     println!("Run `chronicle -r . -o example_changelog.md -t \"My Project Changelog\"` instead");
 
