@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [unreleased]
+
+### 🐛 Bug Fixes
+
+- support sorting order
+
+## [v0.2.0] - 2025-04-12
+
+### 🚀 Features
+
+- support custom regex for commit parsing and version detection
+
+### 📚 Documentation
+
+- add CHANGELOG and LICENSE files
+
+### 🧹 Chore
+
+- v0.2.0
+- **readme**: update example of generated changelog content
+
 ## [v0.1.1] - 2025-04-11
 
 ### 🚀 Features
