@@ -1,4 +1,4 @@
-use crate::OutputFormat;
+use crate::{OutputFormat, SortOrder};
 use clap::Parser;
 use std::path::PathBuf;
 
@@ -24,6 +24,10 @@ pub struct Args {
     /// Format for the changelog
     #[arg(short, long, value_enum, default_value_t = OutputFormat::Markdown)]
     pub format: OutputFormat,
+
+    /// Sort order for commits
+    #[arg(short, long, value_enum, default_value_t = SortOrder::Newest)]
+    pub sort_order: SortOrder,
 
     /// Custom regex pattern for commit messages
     #[arg(long)]

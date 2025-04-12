@@ -10,6 +10,7 @@ Chronicle is a changelog generator that creates formatted changelogs from git co
 - Supports both Markdown and HTML output formats
 - Customizable title and output path
 - Custom regex patterns for commit parsing and version detection
+- Flexible sorting order (newest first or oldest first)
 
 ## Installation
 
@@ -32,6 +33,7 @@ chronicle [OPTIONS]
 -o, --output <OUTPUT>            Output file path for the changelog [default: CHANGELOG.md]
 -t, --title <TITLE>              Title for the changelog [default: Changelog]
 -f, --format <FORMAT>            Format for the changelog [default: markdown] [possible values: markdown, html]
+-s, --sort-order <SORT_ORDER>    Sort order for commits [default: newest-first] [possible values: newest-first, oldest-first]
     --commit-pattern <PATTERN>   Custom regex pattern for parsing commit messages
     --version-pattern <PATTERN>  Custom regex pattern for version tags
 -h, --help                       Print help
@@ -56,6 +58,18 @@ Chronicle recognizes the following commit message formats:
 | `chore(scope): message` | 🧹 Chore |
 
 The `scope` is optional and will be displayed in bold in the changelog.
+
+### Sort Order
+
+By default, Chronicle sorts commits by newest first, but you can change this with the `--sort-order` flag:
+
+```
+# Display newest commits first (default)
+chronicle --sort-order newest
+
+# Display oldest commits first
+chronicle --sort-order oldest
+```
 
 ### Custom Regex Patterns
 

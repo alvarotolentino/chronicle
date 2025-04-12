@@ -7,16 +7,17 @@ use chrono::{DateTime, TimeZone, Utc};
 use git2::{Commit, Repository, Sort, Time};
 use regex::Regex;
 
-use crate::{commit_type::CommitType, parsed_commit::ParsedCommit, version};
+use crate::{SortOrder, commit_type::CommitType, parsed_commit::ParsedCommit, version};
 
 pub struct ChangelogGenerator {
     repo: Repository,
     version_regex: Regex,
     commit_regex: Regex,
+    sort_order: SortOrder,
 }
 
 impl ChangelogGenerator {
-    pub fn new(repo_path: &Path) -> Result<Self, git2::Error> {
+    pub fn new(repo_path: &Path, sort_order: SortOrder) -> Result<Self, git2::Error> {
         let repo = Repository::open(repo_path)?;
         let version_regex = Regex::new(r"^v?(\d+\.\d+\.\d+)$").unwrap();
         let commit_regex =
@@ -26,6 +27,7 @@ impl ChangelogGenerator {
             repo,
             version_regex,
             commit_regex,
+            sort_order,
         })
     }
 
@@ -33,6 +35,7 @@ impl ChangelogGenerator {
         repo_path: &Path,
         version_pattern: Option<&str>,
         commit_pattern: Option<&str>,
+        sort_order: SortOrder,
     ) -> Result<Self, git2::Error> {
         let repo = Repository::open(repo_path)?;
         let version_regex = version_pattern
@@ -48,6 +51,7 @@ impl ChangelogGenerator {
             repo,
             version_regex,
             commit_regex,
+            sort_order,
         })
     }
 
@@ -166,7 +170,10 @@ impl ChangelogGenerator {
             versions.push(current_version);
         }
 
-        versions.reverse();
+        match self.sort_order {
+            SortOrder::Newest => {},
+            SortOrder::Oldest => versions.reverse()
+        }
 
         Ok(versions)
     }

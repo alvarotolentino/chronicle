@@ -13,6 +13,12 @@ enum OutputFormat {
     Html,
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, ValueEnum)]
+enum SortOrder {
+    Newest,
+    Oldest,
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = args::Args::parse();
 
@@ -21,9 +27,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             &args.repository,
             args.commit_pattern.as_deref(),
             args.version_pattern.as_deref(),
+            args.sort_order,
         )?
     } else {
-        ChangelogGenerator::new(&args.repository)?
+        ChangelogGenerator::new(&args.repository, args.sort_order)?
     };
 
     let versions = generator.generate_changelog()?;
