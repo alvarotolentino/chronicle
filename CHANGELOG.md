@@ -2,14 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.2.1] - 2025-04-12
+## [v0.2.2] - 2025-04-13
 
 ### 🐛 Bug Fixes
 
+- **main**: adjust parameter order in with_patterns function
 - support sorting order
 
 ### 🧹 Chore
 
+- v0.2.2
 - v0.2.1
 
 ## [v0.2.0] - 2025-04-12
