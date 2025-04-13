@@ -1,6 +1,6 @@
 [package]
 name = "chronicle"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2024"
 authors = ["Alvaro Tolentino <alvarotolentinou@gmail.com>"]
 license = "GPL-3.0"
