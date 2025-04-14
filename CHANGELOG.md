@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.2.3] - 2025-04-14
+
+### 📚 Documentation
+
+- **changelog**: update changes and versions
+
+### 🚜 Refactor
+
+- isolate git2 dependency and make changelog generation testable
+
+### 🧹 Chore
+
+- v0.2.3
+
 ## [v0.2.2] - 2025-04-13
 
 ### 🐛 Bug Fixes
