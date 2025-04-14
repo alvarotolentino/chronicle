@@ -3,28 +3,34 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
-use chrono::{DateTime, TimeZone, Utc};
-use git2::{Commit, Repository, Sort, Time};
+use chrono::{DateTime, Utc};
 use regex::Regex;
 
-use crate::{SortOrder, commit_type::CommitType, parsed_commit::ParsedCommit, version};
+use crate::{
+    SortOrder,
+    commit_type::CommitType,
+    git_provider::{GitProvider, Result},
+    git2_provider::Git2Provider,
+    parsed_commit::ParsedCommit,
+    version,
+};
 
-pub struct ChangelogGenerator {
-    repo: Repository,
-    version_regex: Regex,
-    commit_regex: Regex,
-    sort_order: SortOrder,
+pub struct ChangelogGenerator<P: GitProvider> {
+    pub git: P,
+    pub version_regex: Regex,
+    pub commit_regex: Regex,
+    pub sort_order: SortOrder,
 }
 
-impl ChangelogGenerator {
-    pub fn new(repo_path: &Path, sort_order: SortOrder) -> Result<Self, git2::Error> {
-        let repo = Repository::open(repo_path)?;
+impl ChangelogGenerator<Git2Provider> {
+    pub fn new(repo_path: &Path, sort_order: SortOrder) -> Result<Self> {
+        let git = Git2Provider::open(repo_path)?;
         let version_regex = Regex::new(r"^v?(\d+\.\d+\.\d+)$").unwrap();
         let commit_regex =
             Regex::new(r"^(?P<type>\w+)(?:\((?P<scope>.+)\))?:\s(?P<message>.+)$").unwrap();
 
         Ok(Self {
-            repo,
+            git,
             version_regex,
             commit_regex,
             sort_order,
@@ -36,8 +42,8 @@ impl ChangelogGenerator {
         version_pattern: Option<&str>,
         commit_pattern: Option<&str>,
         sort_order: SortOrder,
-    ) -> Result<Self, git2::Error> {
-        let repo = Repository::open(repo_path)?;
+    ) -> Result<Self> {
+        let git = Git2Provider::open(repo_path)?;
         let version_regex = version_pattern
             .map(|pattern| Regex::new(pattern).unwrap())
             .unwrap_or_else(|| Regex::new(r"^v?(\d+\.\d+\.\d+)$").unwrap());
@@ -48,21 +54,19 @@ impl ChangelogGenerator {
             });
 
         Ok(Self {
-            repo,
+            git,
             version_regex,
             commit_regex,
             sort_order,
         })
     }
+}
 
-    fn git_time_to_datetime(time: &Time) -> DateTime<Utc> {
-        Utc.timestamp_opt(time.seconds(), 0).unwrap()
-    }
-
-    fn parse_commit(&self, commit: &Commit) -> ParsedCommit {
-        let message = commit.message().unwrap_or("").trim();
-        let id = commit.id().to_string();
-        let timestamp = Self::git_time_to_datetime(&commit.time());
+impl<P: GitProvider> ChangelogGenerator<P> {
+    pub fn parse_commit(&self, commit_info: &crate::git_provider::CommitInfo) -> ParsedCommit {
+        let message = commit_info.message.trim();
+        let id = commit_info.id.clone();
+        let timestamp = commit_info.timestamp;
 
         if let Some(captures) = self.commit_regex.captures(message) {
             let commit_type =
@@ -91,39 +95,7 @@ impl ChangelogGenerator {
         }
     }
 
-    fn get_tag_info(
-        &self,
-    ) -> Result<HashMap<String, (String, Option<DateTime<Utc>>)>, git2::Error> {
-        let mut tag_info = HashMap::new();
-
-        self.repo.tag_names(None)?.iter().for_each(|tag_name| {
-            if let Some(name) = tag_name {
-                if let Ok(obj) = self.repo.revparse_single(&format!("refs/tags/{}", name)) {
-                    if let Ok(tag) = obj.peel_to_tag() {
-                        let tag_id = tag.target_id().to_string();
-                        let tag_time = tag
-                            .tagger()
-                            .map(|tagger| Self::git_time_to_datetime(&tagger.when()));
-
-                        if self.version_regex.is_match(name) {
-                            tag_info.insert(tag_id, (name.to_string(), tag_time));
-                        }
-                    } else if let Ok(commit) = obj.peel_to_commit() {
-                        let commit_id = commit.id().to_string();
-                        let commit_time = Self::git_time_to_datetime(&commit.time());
-
-                        if self.version_regex.is_match(name) {
-                            tag_info.insert(commit_id, (name.to_string(), Some(commit_time)));
-                        }
-                    }
-                }
-            }
-        });
-
-        Ok(tag_info)
-    }
-
-    pub fn generate_changelog(&self) -> Result<Vec<version::Version>, git2::Error> {
+    pub fn generate_changelog(&self) -> Result<Vec<version::Version>> {
         let mut versions: Vec<version::Version> = Vec::new();
         let mut current_version = version::Version {
             name: "unreleased".to_string(),
@@ -131,26 +103,29 @@ impl ChangelogGenerator {
             commits_by_type: HashMap::new(),
         };
 
-        let tag_info = self.get_tag_info()?;
-        let mut revwalk = self.repo.revwalk()?;
+        // Get all tag information
+        let tags = self.git.get_tag_info(&self.version_regex)?;
 
-        revwalk.set_sorting(Sort::TIME)?;
-        revwalk.push_head()?;
+        // Create a map of commit ID -> tag info for quick lookup
+        let mut tag_map: HashMap<String, (String, Option<DateTime<Utc>>)> = HashMap::new();
+        for tag in tags {
+            tag_map.insert(tag.target_commit_id, (tag.name, tag.date));
+        }
 
-        for oid in revwalk {
-            let oid = oid?;
-            let commit = self.repo.find_commit(oid)?;
-            let commit_id = oid.to_string();
+        // Process commits
+        let commit_ids = self.git.get_commit_ids()?;
 
-            let parsed_commit = self.parse_commit(&commit);
+        for commit_id in commit_ids {
+            let commit_info = self.git.get_commit_info(&commit_id)?;
+            let parsed_commit = self.parse_commit(&commit_info);
 
-            if tag_info.contains_key(&commit_id) {
+            if tag_map.contains_key(&commit_id) {
                 // Save current version and start a new one
                 if !current_version.commits_by_type.is_empty() {
                     versions.push(current_version);
                 }
 
-                let (tag_name, tag_date) = tag_info.get(&commit_id).unwrap().clone();
+                let (tag_name, tag_date) = tag_map.get(&commit_id).unwrap().clone();
 
                 current_version = version::Version {
                     name: tag_name,
@@ -171,13 +146,14 @@ impl ChangelogGenerator {
         }
 
         match self.sort_order {
-            SortOrder::Newest => {},
-            SortOrder::Oldest => versions.reverse()
+            SortOrder::Newest => {}
+            SortOrder::Oldest => versions.reverse(),
         }
 
         Ok(versions)
     }
 
+    // Existing methods for writing changelogs remain unchanged
     pub fn write_markdown_changelog(
         &self,
         versions: &[version::Version],
@@ -251,6 +227,7 @@ impl ChangelogGenerator {
         path: &Path,
         title: &str,
     ) -> std::io::Result<()> {
+        // HTML generation code (unchanged)
         let mut file = File::create(path)?;
 
         // Write HTML header
