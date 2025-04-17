@@ -64,7 +64,7 @@ impl ChangelogGenerator<Git2Provider> {
 
 impl<P: GitProvider> ChangelogGenerator<P> {
     pub fn parse_commit(&self, commit_info: &crate::git_provider::CommitInfo) -> ParsedCommit {
-        let message = commit_info.message.trim();
+        let message = commit_info.message.lines().next().unwrap_or("").trim();
         let id = commit_info.id.clone();
         let timestamp = commit_info.timestamp;
 

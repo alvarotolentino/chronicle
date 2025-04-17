@@ -97,6 +97,33 @@ mod tests {
     }
 
     #[test]
+    fn test_multiline_commit_message() {
+        let mock_git = MockGitProvider::new();
+        let generator = ChangelogGenerator {
+            git: mock_git,
+            version_regex: Regex::new(r"^v?(\d+\.\d+\.\d+)$").unwrap(),
+            commit_regex: Regex::new(r"^(?P<type>\w+)(?:\((?P<scope>.+)\))?:\s(?P<message>.+)$")
+                .unwrap(),
+            sort_order: SortOrder::Newest,
+        };
+
+        // Test a multiline commit message
+        let commit_info = CommitInfo {
+            id: "abc123".to_string(),
+            message: "feat(api): add new endpoint\n\nThis is a detailed description.".to_string(),
+            timestamp: Utc.with_ymd_and_hms(2025, 4, 13, 12, 0, 0).unwrap(),
+        };
+
+        let parsed = generator.parse_commit(&commit_info);
+
+        assert_eq!(parsed.id, "abc123");
+        assert_eq!(parsed.commit_type, CommitType::Feature);
+        assert_eq!(parsed.scope, Some("api".to_string()));
+        assert_eq!(parsed.message, "add new endpoint");
+    }
+
+
+    #[test]
     fn test_generate_changelog() -> Result<()> {
         // Create some test commits
         let commits = vec![
