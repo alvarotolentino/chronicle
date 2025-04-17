@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.2.4] - 2025-04-17
+
+### 🐛 Bug Fixes
+
+- **changelog**: parse conventional commits with multilines
+- **main**: update the default file extension based on format selected
+
+### 🧹 Chore
+
+- v0.2.4
+
 ## [v0.2.3] - 2025-04-14
 
 ### 📚 Documentation
