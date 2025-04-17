@@ -22,7 +22,16 @@ enum SortOrder {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args = args::Args::parse();
+    let mut args = args::Args::parse();
+
+    let path = args.output.clone();
+    let extension = path.extension().and_then(|ext| ext.to_str()).unwrap_or("");
+
+    if args.format == OutputFormat::Markdown && extension != "md" {
+        args.output = path.with_extension("md");
+    } else if args.format == OutputFormat::Html && extension != "html" {
+        args.output = path.with_extension("html");
+    }
 
     let generator = if args.commit_pattern.is_some() || args.version_pattern.is_some() {
         ChangelogGenerator::with_patterns(
